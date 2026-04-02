@@ -44,7 +44,7 @@ https://github.com/user-attachments/assets/b5ab0def-889c-4f5b-8aec-26328d70dc8e
 
 ### 📑 設計・ドキュメント（担当範囲）
 - **[機能解説テキスト](./web_app/docs/program_explanation.txt)**：私が中心となり、バックエンドからフロントエンドまで、**システム全体の機能詳細をドキュメント化**しました。
-- **[状態遷移図](./web_app/docs/Screen%20transition%20diagram.png)**：チーム内の共通認識を作るために作成した、システムの全体設計図です。
+- **[画面遷移図](./web_app/docs/Screen%20transition%20diagram.png)**：チーム内の共通認識を作るために作成した、システムの全体設計図です。
 
 ### ✨ グループ開発での貢献
 - **バックエンド担当:** CSV形式の観光データをデータベース化し、Flaskを用いた動的な検索機能を実装しました。また、AIを開発パートナーとして活用し、SQLクエリの最適化やエラーハンドリングの効率化を図りました。
