@@ -10,7 +10,7 @@
 
 ### 🎥 動作デモ
 
-https://github.com/user-attachments/assets/4d59d0c1-00a7-4af8-85ee-1f79568a6932
+https://github.com/user-attachments/assets/8173a8c2-3bcc-4278-9c94-0d075fd18d29
 
 ### 🛠 使用技術
 - **言語:** Java 17 (Swing / AWT)
