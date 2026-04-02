@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<div class="container py-3">
+    <a href="/?type=lodging" class="btn btn-outline-secondary mb-4">← 宿泊一覧に戻る</a>
+
+    <div class="row mb-5">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-3 flex-wrap">
+                <h1 class="display-5 fw-bold mb-0 me-3">{{ item.name }}</h1>
+                <a href="/add_favorite/lodging/{{ item.id }}" class="btn btn-warning rounded-pill shadow-sm text-nowrap">
+                    ➕ しおりに追加
+                </a>
+            </div>
+            
+            <div class="mb-4">
+                <span class="badge bg-info text-white fs-6">{{ item.type }}</span>
+                <span class="badge bg-secondary fs-6">{{ item.area }}</span>
+            </div>
+
+            <p class="lead text-muted mb-4"><i class="bi bi-geo-alt-fill"></i> {{ item.address }}</p>
+
+            <!-- ボタン類 -->
+            <div class="d-flex gap-2 mb-4">
+                <a href="https://www.google.com/search?tbm=isch&q={{ item.name }} 福井" target="_blank" class="btn btn-outline-dark flex-grow-1">
+                    📷 写真をGoogleで見る
+                </a>
+                {% if item.tel %}
+                <a href="tel:{{ item.tel }}" class="btn btn-success flex-grow-1">
+                    📞 電話をかける
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- 施設詳細テーブル -->
+            <h4 class="mb-3">ℹ️ 施設情報</h4>
+            <table class="table table-bordered table-sm">
+                <tr><th class="bg-light w-25">営業種別</th><td>{{ item.type }}</td></tr>
+                <tr><th class="bg-light">部屋数</th><td>{{ item.rooms or '-' }} 室</td></tr>
+                <tr><th class="bg-light">定員</th><td>{{ item.capacity or '-' }} 名</td></tr>
+                <tr><th class="bg-light">電話番号</th><td>{{ item.tel or '-' }}</td></tr>
+            </table>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
+                <div class="card-body p-0"><div id="map" style="height: 300px; width: 100%;"></div></div>
+                <div class="card-footer bg-white text-center">
+                    <a href="https://www.google.com/maps/search/?api=1&query={{ item.lat }},{{ item.lng }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                        📍 Google Mapで開く
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ここから近い観光地 -->
+    <div class="border-top pt-4 mt-4">
+        <h3 class="mb-4 fw-bold">🚶 ここから近い観光地</h3>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for spot in nearby_spots %}
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0">
+                    {% if spot.img_url %}
+                    <img src="{{ spot.img_url }}" class="card-img-top" style="height: 180px; object-fit: cover;" alt="{{ spot.name }}">
+                    {% else %}
+                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 180px;">NO IMAGE</div>
+                    {% endif %}
+                    
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title fw-bold mb-0">{{ spot.name }}</h5>
+                            <span class="badge bg-danger ms-1">{{ spot.distance }} km</span>
+                        </div>
+                        <p class="card-text text-muted small">{{ spot.category }}</p>
+                        <a href="/spot/{{ spot.id }}?lat={{ user_lat or '' }}&lng={{ user_lng or '' }}" class="btn btn-outline-primary btn-sm stretched-link w-100">詳細情報へ</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var map = L.map('map').setView([{{ item.lat }}, {{ item.lng }}], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OSM contributors'
+    }).addTo(map);
+
+    L.marker([{{ item.lat }}, {{ item.lng }}]).addTo(map).bindPopup('<b>{{ item.name }}</b>');
+
+    {% if user_lat and user_lng %}
+        L.circleMarker([{{ user_lat }}, {{ user_lng }}], {
+            color: 'blue',
+            fillColor: '#30f',
+            fillOpacity: 0.5,
+            radius: 10
+        }).addTo(map).bindPopup("<b>🔵 あなたの現在地</b>");
+    {% endif %}
+</script>
+{% endblock %}

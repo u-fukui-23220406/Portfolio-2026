@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-end mb-2">
+    <a href="/map" class="btn btn-success fw-bold shadow-sm">🗺️ 全体マップを見る</a>
+</div>
+
+<!-- タブ切り替え -->
+<div class="d-flex justify-content-center mb-4">
+    <div class="btn-group" role="group">
+        <a href="/?type=spot" class="btn px-4 py-2 {% if search_type == 'spot' %}btn-primary fw-bold{% else %}btn-outline-secondary{% endif %}">🦖 観光地</a>
+        <a href="/?type=gourmet" class="btn px-4 py-2 {% if search_type == 'gourmet' %}btn-dark fw-bold{% else %}btn-outline-secondary{% endif %}">🍽️ グルメ</a>
+        <!-- ★追加: 宿泊タブ -->
+        <a href="/?type=lodging" class="btn px-4 py-2 {% if search_type == 'lodging' %}btn-info text-white fw-bold{% else %}btn-outline-secondary{% endif %}">🛏️ 宿泊</a>
+    </div>
+</div>
+
+<div class="card p-4 mb-4 border-0 shadow-sm bg-white">
+    <form method="GET" action="/" id="searchForm">
+        <input type="hidden" name="type" value="{{ search_type }}">
+        <input type="hidden" name="lat" id="lat" value="{{ user_lat or '' }}">
+        <input type="hidden" name="lng" id="lng" value="{{ user_lng or '' }}">
+        
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small text-muted">キーワード</label>
+                <input type="text" name="keyword" class="form-control" placeholder="名称で検索..." value="{{ keyword }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted">エリア</label>
+                <select name="area" class="form-select">
+                    <option value="すべて">全エリア</option>
+                    {% for a in areas %}
+                    <option value="{{ a }}" {% if area == a %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-dark w-100">検索</button>
+            </div>
+            <div class="col-md-2">
+                <button type="button" onclick="useCurrentLocation()" class="btn btn-outline-danger w-100">📍 現在地周辺</button>
+            </div>
+        </div>
+    </form>
+    {% if user_lat %}
+    <div class="mt-2 text-center text-danger small">📍 現在地からの距離順 (<a href="/?type={{ search_type }}">解除</a>)</div>
+    {% endif %}
+</div>
+
+<div class="mb-3 text-muted"><span class="fw-bold">{{ total_count }}</span> 件（{{ current_page }} / {{ max_page }} ページ）</div>
+
+<!-- 結果表示 -->
+{% if search_type == 'spot' %}
+    <!-- 観光地 (変更なし) -->
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for item in results %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 hover-effect">
+                <div class="position-relative">
+                    {% if item.img_url %}
+                    <img src="{{ item.img_url }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">NO IMAGE</div>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">{{ item.name }}</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">{{ item.area }}</small>
+                        {% if item.distance_from_user %}
+                        <span class="badge bg-danger">現在地から {{ item.distance_from_user }}km</span>
+                        {% endif %}
+                    </div>
+                    <a href="/spot/{{ item.id }}?lat={{ user_lat or '' }}&lng={{ user_lng or '' }}" class="btn btn-outline-primary stretched-link w-100">詳細を見る</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">該当なし</div>
+        {% endfor %}
+    </div>
+
+{% elif search_type == 'gourmet' %}
+    <!-- グルメ (変更なし) -->
+    <div class="row row-cols-1 row-cols-md-2 g-3">
+        {% for item in results %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border hover-effect">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title fw-bold mb-0 text-truncate" style="max-width: 80%;">{{ item.name }}</h5>
+                        {% if item.distance_from_user %}
+                        <span class="badge bg-danger">{{ item.distance_from_user }}km</span>
+                        {% endif %}
+                    </div>
+                    <p class="card-text text-secondary small mb-3">
+                        {% if item.menu_info %}🍽️ {{ item.menu_info[:40] }}...{% else %}{{ item.pr_text[:40] }}...{% endif %}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-end border-top pt-2">
+                        <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ item.address }}</small>
+                        <span class="text-primary small fw-bold">詳細 &rsaquo;</span>
+                    </div>
+                    <a href="/gourmet/{{ item.id }}?lat={{ user_lat or '' }}&lng={{ user_lng or '' }}" class="stretched-link"></a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center">該当なし</div>
+        {% endfor %}
+    </div>
+
+{% else %}
+    <!-- ★追加: 宿泊リスト -->
+    <div class="row row-cols-1 row-cols-md-2 g-3">
+        {% for item in results %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border hover-effect">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title fw-bold mb-0 text-truncate" style="max-width: 80%;">{{ item.name }}</h5>
+                        {% if item.distance_from_user %}
+                        <span class="badge bg-danger">{{ item.distance_from_user }}km</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-2">
+                        <span class="badge bg-info text-white">{{ item.type }}</span>
+                        {% if item.rooms %}<span class="badge bg-light text-dark border">部屋数: {{ item.rooms }}</span>{% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-end border-top pt-2">
+                        <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ item.address }}</small>
+                        <span class="text-primary small fw-bold">詳細 &rsaquo;</span>
+                    </div>
+                    <a href="/lodging/{{ item.id }}?lat={{ user_lat or '' }}&lng={{ user_lng or '' }}" class="stretched-link"></a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center">該当なし</div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<!-- ページネーション -->
+{% if max_page > 1 %}
+<nav class="mt-5">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="/?type={{ search_type }}&page={{ current_page - 1 }}&keyword={{ keyword }}&area={{ area }}&lat={{ user_lat or '' }}&lng={{ user_lng or '' }}">← 前へ</a>
+        </li>
+        <li class="page-item disabled"><span class="page-link text-dark fw-bold">{{ current_page }} / {{ max_page }} ページ</span></li>
+        <li class="page-item {% if current_page == max_page %}disabled{% endif %}">
+            <a class="page-link" href="/?type={{ search_type }}&page={{ current_page + 1 }}&keyword={{ keyword }}&area={{ area }}&lat={{ user_lat or '' }}&lng={{ user_lng or '' }}">次へ →</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+
+<script>
+function useCurrentLocation() {
+    if (!navigator.geolocation) { alert("位置情報がサポートされていません"); return; }
+    const btn = document.querySelector('button[onclick="useCurrentLocation()"]');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 取得中...';
+    btn.disabled = true;
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            document.getElementById('lat').value = position.coords.latitude;
+            document.getElementById('lng').value = position.coords.longitude;
+            document.querySelector('select[name="area"]')?.removeAttribute('name');
+            document.getElementById('searchForm').submit();
+        },
+        (error) => {
+            alert("位置情報の取得に失敗しました");
+            btn.innerHTML = '📍 現在地周辺';
+            btn.disabled = false;
+        }
+    );
+}
+</script>
+{% endblock %}

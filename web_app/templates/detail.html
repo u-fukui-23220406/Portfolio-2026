@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<div class="row">
+    <!-- 左カラム：観光地情報 -->
+    <div class="col-lg-7 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/?type=spot">観光地一覧</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ item.name }}</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex align-items-center mb-3 flex-wrap">
+            <h1 class="display-5 fw-bold mb-0 me-3">{{ item.name }}</h1>
+            <a href="/add_favorite/spot/{{ item.id }}" class="btn btn-warning rounded-pill shadow-sm text-nowrap">
+                ➕ しおりに追加
+            </a>
+        </div>
+
+        <div class="mb-3">
+            <span class="badge bg-secondary">{{ item.category }}</span>
+            <span class="badge bg-dark">{{ item.area }}</span>
+        </div>
+
+        {% if item.img_url %}
+        <img src="{{ item.img_url }}" class="img-fluid rounded shadow mb-4 w-100" style="max-height: 400px; object-fit: cover;" alt="{{ item.name }}">
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title border-bottom pb-2">📖 概要</h5>
+                <p class="card-text">{{ item.description }}</p>
+                <h5 class="card-title border-bottom pb-2 mt-4">ℹ️ 施設情報</h5>
+                <table class="table table-striped table-bordered">
+                    <tr><th style="width: 120px;" class="bg-light">住所</th><td>{{ item.address }}</td></tr>
+                    <tr><th class="bg-light">営業時間</th><td>{{ item.business_hours or '記載なし' }}</td></tr>
+                    <tr><th class="bg-light">定休日</th><td>{{ item.holiday or '記載なし' }}</td></tr>
+                    <tr><th class="bg-light">料金</th><td>{{ item.price or '記載なし' }}</td></tr>
+                    <tr><th class="bg-light">駐車場</th><td>{{ item.parking_info or '記載なし' }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右カラム：地図 -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm mb-4 border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span>🗺️ 周辺マップ</span>
+                <small>観光地と荷物預かり所の位置</small>
+            </div>
+            <div class="card-body p-0">
+                <div id="map" style="height: 350px; width: 100%;"></div>
+            </div>
+        </div>
+
+        <h4 class="mb-3 border-bottom pb-2">👜 最寄りの手ぶら観光カウンター</h4>
+        <div class="list-group shadow-sm">
+        {% for counter in counters %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <h6 class="mb-1 fw-bold text-primary">{{ counter.name }}</h6>
+                    <span class="badge bg-danger rounded-pill">{{ counter.distance }} km</span>
+                </div>
+                <p class="mb-1 small text-muted"><i class="bi bi-geo-alt-fill"></i> {{ counter.address }}</p>
+                <div class="mt-2 mb-2">
+                    {% if counter.is_cool_delivery %}<span class="badge bg-info text-dark border border-info">❄️ クール便</span>{% endif %}
+                    {% if "英語" in counter.languages %}<span class="badge bg-warning text-dark border border-warning">English</span>{% endif %}
+                    {% if "中国語" in counter.languages %}<span class="badge bg-danger border border-danger">中文</span>{% endif %}
+                    {% if "韓国語" in counter.languages %}<span class="badge bg-light text-dark border border-secondary">한국어</span>{% endif %}
+                </div>
+                <div class="alert alert-light border p-2 mb-2 small">
+                    <div><strong>💰 預かり料金:</strong> {{ counter.price }}</div>
+                    <div><strong>⏰ 営業時間(月):</strong> {{ counter.business_hours }}</div>
+                </div>
+                <div class="text-end mt-2">
+                    <a href="https://www.google.com/maps/dir/?api=1&origin={{ item.lat }},{{ item.lng }}&destination={{ counter.lat }},{{ counter.lng }}" target="_blank" class="btn btn-sm btn-outline-success">ここへのルート案内 ↗</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-secondary">近く（半径数km以内）に登録されたカウンターが見つかりませんでした。</div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var map = L.map('map').setView([{{ item.lat }}, {{ item.lng }}], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 目的地のマーカー
+    var spotMarker = L.marker([{{ item.lat }}, {{ item.lng }}]).addTo(map);
+    spotMarker.bindPopup("<b>📍 目的地: {{ item.name }}</b>").openPopup();
+
+    // ★追加: 現在地のピン表示（もし情報があれば）
+    {% if user_lat and user_lng %}
+        // 青い丸で現在地を表現
+        L.circleMarker([{{ user_lat }}, {{ user_lng }}], {
+            color: 'blue',
+            fillColor: '#30f',
+            fillOpacity: 0.5,
+            radius: 10
+        }).addTo(map).bindPopup("<b>🔵 あなたの現在地</b>");
+    {% endif %}
+
+    {% for counter in counters %}
+        L.marker([{{ counter.lat }}, {{ counter.lng }}])
+         .addTo(map)
+         .bindPopup(`<b>👜 {{ counter.name }}</b><br>料金: {{ counter.price }}<br><span style="font-size:0.8em;">{{ counter.business_hours }}</span>`);
+    {% endfor %}
+</script>
+{% endblock %}

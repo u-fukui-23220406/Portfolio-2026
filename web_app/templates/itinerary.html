@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="display-5 fw-bold mb-4 text-center">📒 しおり</h1>
+
+    <!-- ★修正: 宿泊(lodgings)も空かどうかチェックに加える -->
+    {% if not spots and not gourmets and not lodgings %}
+    <div class="text-center py-5">
+        <div class="display-1 mb-3">📝</div>
+        <h3 class="text-muted">しおりは空っぽです</h3>
+        <p>気になる観光地やお店、宿を見つけて、「＋」ボタンで追加してみましょう！</p>
+        <a href="/" class="btn btn-primary mt-3">スポットを探しに行く</a>
+    </div>
+    {% else %}
+
+    <div class="row">
+        <!-- 観光地リスト -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow border-primary h-100">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">🦖 観光地</h5>
+                    <span class="badge bg-white text-primary">{{ spots|length }}件</span>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for item in spots %}
+                    <div class="list-group-item p-3">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 fw-bold">{{ item.name }}</h6>
+                            <a href="/remove_favorite/spot/{{ item.id }}" class="btn btn-outline-danger btn-sm" style="font-size: 0.7rem;">削除</a>
+                        </div>
+                        <p class="mb-1 small text-muted">{{ item.address }}</p>
+                        <a href="/spot/{{ item.id }}" class="small text-decoration-none">詳細 &rsaquo;</a>
+                    </div>
+                    {% else %}
+                    <div class="list-group-item text-center text-muted py-4 small">登録なし</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- グルメリスト -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow border-dark h-100">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">🍽️ グルメ</h5>
+                    <span class="badge bg-white text-dark">{{ gourmets|length }}件</span>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for item in gourmets %}
+                    <div class="list-group-item p-3">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 fw-bold">{{ item.name }}</h6>
+                            <a href="/remove_favorite/gourmet/{{ item.id }}" class="btn btn-outline-danger btn-sm" style="font-size: 0.7rem;">削除</a>
+                        </div>
+                        <p class="mb-1 small text-muted">{{ item.category }}</p>
+                        <a href="/gourmet/{{ item.id }}" class="small text-decoration-none">詳細 &rsaquo;</a>
+                    </div>
+                    {% else %}
+                    <div class="list-group-item text-center text-muted py-4 small">登録なし</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 宿泊リスト -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow border-info h-100">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">🛏️ 宿泊</h5>
+                    <span class="badge bg-white text-info">{{ lodgings|length }}件</span>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for item in lodgings %}
+                    <div class="list-group-item p-3">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 fw-bold">{{ item.name }}</h6>
+                            <a href="/remove_favorite/lodging/{{ item.id }}" class="btn btn-outline-danger btn-sm" style="font-size: 0.7rem;">削除</a>
+                        </div>
+                        <p class="mb-1 small text-muted">{{ item.type }}</p>
+                        <a href="/lodging/{{ item.id }}" class="small text-decoration-none">詳細 &rsaquo;</a>
+                    </div>
+                    {% else %}
+                    <div class="list-group-item text-center text-muted py-4 small">登録なし</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center mt-4 d-print-none">
+        <button onclick="window.print()" class="btn btn-outline-dark">🖨️ このリストを印刷する</button>
+        <a href="/" class="btn btn-primary ms-2">さらに追加する</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
